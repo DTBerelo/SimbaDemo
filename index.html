@@ -197,6 +197,9 @@
 
   /* ===== Intelligence panel ===== */
   .intel{width:430px;display:flex;flex-direction:column;gap:14px}
+  /* same flex-clip guard as the chat: cards use overflow:hidden, so when the
+     mobile bottom-sheet overflows, flex must scroll it — not shrink the cards */
+  .intel>*{flex-shrink:0}
   .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;overflow:hidden}
   .card h3{font-size:11px;letter-spacing:1.6px;color:var(--mut);padding:13px 16px 0;font-weight:800}
   .card h3 .live{color:#ff4d6a;font-size:9px;vertical-align:2px;animation:blink 1.4s infinite}
@@ -265,8 +268,9 @@
 
   @media (max-width:900px){.intel{width:392px}.stage{padding:18px 10px 50px}}
 
-  /* ===== Mobile floating insights button (hidden on desktop) ===== */
+  /* ===== Mobile "What Simba sees" toggle + sheet close (hidden on desktop) ===== */
   .mob-intel-btn{display:none}
+  .sheet-close{display:none}
 
   /* ===== Phone-optimised layout ===== */
   @media (max-width:640px){
@@ -295,10 +299,15 @@
       padding:16px 12px 30px;transform:translateY(103%);transition:transform .32s ease;box-shadow:0 -12px 44px rgba(0,0,0,.65)}
     body.intel-open .intel{transform:translateY(0)}
     .feed{max-height:none}
-    .mob-intel-btn{display:flex;align-items:center;gap:7px;position:fixed;right:13px;bottom:16px;z-index:65;
-      background:var(--simba-red);color:#fff;border:0;border-radius:26px;padding:12px 17px;font-size:13px;font-weight:800;
-      box-shadow:0 7px 20px rgba(0,0,0,.55);cursor:pointer}
-    body.intel-open .mob-intel-btn{background:#2a3140}
+    /* in-flow toggle bar — sits above the chips inside the phone, so it scrolls
+       with them and can never collide with a fixed-position element */
+    .mob-intel-btn{display:flex;align-items:center;justify-content:center;gap:7px;flex-shrink:0;
+      width:100%;border:0;border-top:1px solid #2b2f3a;background:var(--simba-red);color:#fff;
+      font-size:13px;font-weight:800;letter-spacing:.3px;padding:11px;cursor:pointer}
+    /* sticky close handle inside the open bottom-sheet */
+    .sheet-close{display:flex;align-items:center;justify-content:center;gap:6px;position:sticky;top:0;z-index:2;
+      width:100%;border:0;cursor:pointer;background:var(--bg);color:var(--simba-yellow);font-weight:800;
+      font-size:12.5px;letter-spacing:.5px;padding:11px;border-bottom:1px solid var(--line);margin:-16px -12px 8px;width:auto}
   }
 
   /* ===== Accessibility: visible keyboard focus ===== */
@@ -358,6 +367,7 @@
           <div class="wa-icons" aria-hidden="true">⋮</div>
         </div>
         <div class="chat" id="chat"></div>
+        <button class="mob-intel-btn" id="mobIntelBtn" onclick="toggleIntel()">📊 What Simba sees</button>
         <div class="chips" id="chips" style="display:none"></div>
         <div class="wa-input">
           <div class="field"><input id="inp" placeholder="Type a message" aria-label="Type a message to Simba Connect" onkeydown="if(event.key==='Enter')sendFree()"></div>
@@ -380,6 +390,7 @@
   </div>
 
   <div class="intel" id="intelNew">
+    <button class="sheet-close" onclick="toggleIntel()" aria-label="Close insights">▾ Close “What Simba sees”</button>
     <div class="card">
       <h3>WHAT SIMBA SEES — LIVE <span class="live">●</span></h3>
       <div class="profile">
@@ -415,6 +426,7 @@
   </div>
 
   <div class="intel" id="intelOld" style="display:none">
+    <button class="sheet-close" onclick="toggleIntel()" aria-label="Close insights">▾ Close “What Simba sees”</button>
     <div class="card">
       <h3>WHAT SIMBA SEES — TODAY'S DETERMINISTIC BOT</h3>
       <div class="deadpanel">
@@ -436,8 +448,6 @@
     </div>
   </div>
 </div>
-
-<button class="mob-intel-btn" id="mobIntelBtn" onclick="toggleIntel()">📊 What Simba sees</button>
 
 <div class="notes" id="notes">
   <div class="nt">PRESENTER NOTES</div>
@@ -1165,10 +1175,7 @@ function resetAll(){
   setMode(mode);
 }
 function toggleNotes(){$('notes').classList.toggle('show')}
-function toggleIntel(){
-  const open=document.body.classList.toggle('intel-open');
-  $('mobIntelBtn').innerHTML=open?'✕ Close insights':'📊 What Simba sees';
-}
+function toggleIntel(){document.body.classList.toggle('intel-open')}
 
 /* ================= PRESENTER KEYBOARD SHORTCUTS ================= */
 /* Space = play / pause · ←/→ = previous / next chapter (Berelo mode).
