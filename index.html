@@ -470,6 +470,8 @@ const chat=$('chat'), feed=$('feed');
    land on stage after the presenter has reset or toggled. */
 let epoch=0;
 function later(fn,ms){const e=epoch;return setTimeout(()=>{if(e===epoch)fn()},ms)}
+/* Playback pace for the auto-running preview conversations. 1.25 = 25% slower. */
+const PACE=1.25;
 
 /* ================= CONFIG ================= */
 /* Re-theming levers for the interactive (free-chat) surfaces and squad logic.
@@ -742,9 +744,9 @@ function autoQuiz(c){
     const pick = step===0?0 : step===1?2 : 0; /* movie night, heat seeker, the plug */
     answerQuiz(c,step,Math.min(pick,opts.length-1));
     step++;
-    if(step<3)setTimeout(tick,1750);
+    if(step<3)setTimeout(tick,1750*PACE);
   };
-  setTimeout(tick,1400);
+  setTimeout(tick,1400*PACE);
 }
 
 /* ================= LEADERBOARD ================= */
@@ -945,7 +947,7 @@ function nextStep(){
   if(!playing)return;
   if(chIdx>=script.length){endTour();return}
   const ch=script[chIdx];
-  if(stepIdx>=ch.steps.length){chIdx++;stepIdx=0;renderPills();playTimer=setTimeout(nextStep,700);return}
+  if(stepIdx>=ch.steps.length){chIdx++;stepIdx=0;renderPills();playTimer=setTimeout(nextStep,700*PACE);return}
   const s=ch.steps[stepIdx++];
   const plain=t=>(t||'').replace(/<[^>]+>/g,'');
   let delay=1700;
@@ -961,21 +963,21 @@ function nextStep(){
   else if(s.b){
     /* brand side: typing time + reading time both scale with message length, so longer replies feel real */
     const len=plain(s.b).length;
-    const typeMs=Math.min(3200,Math.max(1300,len*15));
-    const readMs=Math.min(3800,Math.max(2100,len*25));
+    const typeMs=Math.min(3200,Math.max(1300,len*15))*PACE;
+    const readMs=Math.min(3800,Math.max(2100,len*25))*PACE;
     showTyping();
     playTimer=setTimeout(()=>{hideTyping();addMsg('in',s.b);playTimer=setTimeout(nextStep,readMs)},typeMs);
     return;
   }
   else if(s.card){addCard.apply(null,s.card);delay=2800}
   else if(s.photo){addPhoto(s.photo[0],s.photo[1]);delay=2300}
-  else if(s.battle){const card=addBattle();delay=4400;setTimeout(()=>{if(playing)castVote(card,'w')},2400)}
+  else if(s.battle){const card=addBattle();delay=4400;setTimeout(()=>{if(playing)castVote(card,'w')},2400*PACE)}
   else if(s.quiz){addQuiz(true);delay=7400}
   else if(s.leader){addLeaderboard(true);delay=3200}
   else if(s.status){addStatus(s.status[0],s.status[1],s.status[2]);delay=3000}
   else if(s.panel){s.panel();delay=3000}
   else if(s.fin){showFinale();return}
-  playTimer=setTimeout(nextStep,delay);
+  playTimer=setTimeout(nextStep,delay*PACE);
 }
 function endTour(){stopPlay();$('btnPlay').innerHTML='▶&nbsp; Replay';enableFree()}
 
@@ -994,13 +996,13 @@ function playOld(){
   if(!playing)return;
   if(oldIdx>=oldScript.length){stopPlay();$('btnPlay').innerHTML='▶&nbsp; Replay';return}
   const s=oldScript[oldIdx++];let delay=1500;
-  if(s.b){showTyping();oldTimer=setTimeout(()=>{hideTyping();addMsg('in',s.b);oldTimer=setTimeout(playOld,1800)},1100);return}
+  if(s.b){showTyping();oldTimer=setTimeout(()=>{hideTyping();addMsg('in',s.b);oldTimer=setTimeout(playOld,1800*PACE)},1100*PACE);return}
   else if(s.u){addMsg('out',s.u);delay=1500}
   else if(s.photo){addPhoto(s.photo[0],s.photo[1]);delay=1600}
   else if(s.div){addDivider(s.div);delay=1400}
   else if(s.old){s.old();delay=2300}
   else if(s.capOld){setCaption('THE DIFFERENCE',"Same consumer. Same WhatsApp. <b>Nothing captured, nothing learned, sale lost.</b> Toggle to <b>THE BERELO WAY</b> and replay the exact same consumer.");stopPlay();$('btnPlay').innerHTML='▶&nbsp; Replay';return}
-  oldTimer=setTimeout(playOld,delay);
+  oldTimer=setTimeout(playOld,delay*PACE);
 }
 
 /* ================= FREE CHAT ================= */
